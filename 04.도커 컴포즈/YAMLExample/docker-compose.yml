@@ -1,0 +1,56 @@
+version: '3.2'
+services:
+  apache:
+    container_name: apache
+    build:
+      context: .
+      dockerfile: /home/docker/docker_files/apache/Dockerfile
+    ports:
+      - 80:80
+      - 443:443
+      - 800:800
+    volumes:
+      - /home/docker_work/httpd/vhost.conf:/opt/docker/etc/httpd/vhost.conf
+      - /home/docker_work/httpd/logs:logs
+      - /home/project/repo_ssl:/ssl
+      - /home/project/repo_front:/app
+      - /home/project/repo_files:/files
+    depends_on:
+      - spring_boot
+    links:
+      - spring_boot
+    restart: always
+
+  mysql:
+    container_name: mysql
+    build:
+      context: .
+      dockerfile: /home/docker/docker_files/mysql/Dcokerfile
+    command: --default-authentication-plugin=mysql_native_password
+    volumes:
+      - /home/docker_work/mysql/data:/var/lib/mysql
+      - /home/docker_work/mysql/logs:/var/log/mysql
+    ports:
+      - 3306:3306
+    environment:
+      - MYSQL_ROOT_PASSWORD=MYSQL
+    restart: always
+
+
+  spring_boot:
+    container_name: spring_boot
+    build:
+      context: .
+      dockerfile: /home/docker/docker_files/java/Dockerfile
+    command: "java -jar /app/server/ROOT.war"
+    volumes:
+      - /home/project/repo_files:/app/files
+      - /home/project/repo_server:/app/server
+    ports:
+      - 8080:8080
+    depends_on:
+      - mysql
+    links:
+      - mysql
+    restart: always
+
